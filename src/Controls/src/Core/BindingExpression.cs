@@ -145,12 +145,12 @@ namespace Microsoft.Maui.Controls
 
 			if (needsGetter)
 			{
-				if (part.TryGetValue(current, out object value) || part.IsSelf)
-				{
-					value = Binding.GetSourceValue(value, property.ReturnType);
-				}
-				else
-					value = Binding.FallbackValue ?? property.GetDefaultValue(target);
+				object value = part.TryGetValue( current, out value ) || part.IsSelf ?
+					Binding.GetSourceValue( value, target, property ) :
+					Binding.FallbackValue ?? property.GetDefaultValue(target);
+
+				if (ReferenceEquals(value, Controls.Binding.DoNothing))
+					return;
 
 				if (!TryConvert(ref value, property, property.ReturnType, true))
 				{
@@ -163,6 +163,9 @@ namespace Microsoft.Maui.Controls
 			else if (needsSetter && part.LastSetter != null && current != null)
 			{
 				object value = Binding.GetTargetValue(target.GetValue(property), part.SetterType);
+
+				if (ReferenceEquals(value, Controls.Binding.DoNothing) || ReferenceEquals(value, BindableProperty.UnsetValue))
+					return;
 
 				if (!TryConvert(ref value, property, part.SetterType, false))
 				{

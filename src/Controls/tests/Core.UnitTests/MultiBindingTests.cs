@@ -248,6 +248,183 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 			Assert.Equal(oldName + " Extra", label2.Text);
 		}
 
+		[Fact]
+		public void StringFormatIgnoredWhenDoNothingFallbackAndNullTargetValuesUsed()
+		{
+			var formatString = "String Formatted {0}";
+			var group = new GroupViewModel();
+			var stack = new StackLayout
+			{
+				BindingContext = group
+			};
+
+			var label = new Label() {BindingContext = group.Person1};
+			label.SetBinding(
+				Label.TextProperty,
+				new MultiBinding
+				{
+					Bindings = {
+						new Binding(nameof(PersonViewModel.FirstName)),
+					},
+					Converter = new StringConcatenationConverter(),
+					StringFormat = formatString,
+					TargetNullValue = c_TargetNull,
+					FallbackValue = c_Fallback
+				});
+
+			label.BindingContext = group.Person5;
+			stack.Children.Add(label);
+
+			Assert.Equal(string.Format(formatString, group.Person5.FirstName), label.Text);
+
+			var savedName = label.Text;
+			group.Person5.FirstName = nameof(Binding.DoNothing);
+			Assert.Equal(nameof(Binding.DoNothing), group.Person5.FirstName );
+			Assert.Equal(savedName, label.Text);
+
+			group.Person5.FirstName = nameof(BindableProperty.UnsetValue);
+			Assert.Equal(nameof(BindableProperty.UnsetValue), group.Person5.FirstName);
+			Assert.Equal(c_Fallback, label.Text);
+
+			group.Person5.FirstName = "null";
+			Assert.Equal("null", group.Person5.FirstName);
+			Assert.Equal(c_TargetNull, label.Text);
+		}
+
+		[Fact]
+		public void DefaultValueUsedWhenFallbackNull()
+		{
+			var defaultValue = "Foo Bar";
+			var group = new GroupViewModel();
+			var stack = new StackLayout
+			{
+				BindingContext = group
+			};
+
+			var surrogateTextProperty = BindableProperty.Create(nameof(Label.Text), typeof(string), typeof(Label), defaultValue);
+
+			var label = new Label();
+			label.SetBinding(
+				surrogateTextProperty,
+				new MultiBinding
+				{
+					Bindings = {
+						new Binding(nameof(PersonViewModel.FirstName)),
+					},
+					Converter = new StringConcatenationConverter(),
+				});
+
+
+			label.BindingContext = group.Person5;
+			stack.Children.Add(label);
+
+			Assert.Equal(group.Person5.FirstName, label.GetValue(surrogateTextProperty));
+
+			group.Person5.FirstName = nameof(BindableProperty.UnsetValue);
+			Assert.Equal(nameof(BindableProperty.UnsetValue), group.Person5.FirstName);
+			Assert.Equal(defaultValue, label.GetValue(surrogateTextProperty));
+		}
+
+		[Fact]
+		public void TwoWayAppliedToBindingContextMustBeEvaluated()
+		{
+			var firstName = "Homer";
+			var middleName = "Jay";
+			var lastName = "Simpson";
+			var group = new GroupViewModel();
+			var label = new Label
+			            {
+				            BindingContext = group.Person5
+			            };
+
+			label.SetBinding(
+				Label.BindingContextProperty,
+				new MultiBinding
+				{
+					Bindings = {
+								   new Binding(nameof(PersonViewModel.FirstName)),
+								   new Binding(nameof(PersonViewModel.MiddleName)),
+								   new Binding(nameof(PersonViewModel.LastName)),
+							   },
+					Converter = new StringConcatenationConverter(),
+					Mode = BindingMode.TwoWay
+				});
+
+			Assert.Equal(group.Person5.FullName, label.BindingContext);
+
+			label.BindingContext = $"{firstName} {middleName} {lastName}";
+
+			Assert.Equal(firstName, group.Person5.FirstName);
+			Assert.Equal(middleName, group.Person5.MiddleName);
+			Assert.Equal(lastName, group.Person5.LastName);
+		}
+
+		[Fact]
+		public void OneWayAppliedToBindingContextMustBeEvaluatedWhenInherited()
+		{
+			var firstName = "Homer";
+			var middleName = "Jay";
+			var lastName = "Simpson";
+			var group = new GroupViewModel();
+			var stack = new StackLayout();
+
+			var label = new Label();
+			label.SetBinding(
+				Label.BindingContextProperty,
+				new MultiBinding
+				{
+					Bindings = {
+						           new Binding(nameof(PersonViewModel.FirstName)),
+						           new Binding(nameof(PersonViewModel.MiddleName)),
+						           new Binding(nameof(PersonViewModel.LastName)),
+					           },
+					Converter = new StringConcatenationConverter(),
+					FallbackValue = c_Fallback, // ensures the context is properly chosen
+					Mode = BindingMode.OneWay
+				});
+
+			stack.Children.Add(label);
+			Assert.Equal( c_Fallback, label.BindingContext);
+
+			stack.BindingContext = group.Person5;
+			Assert.Equal(group.Person5.FullName, label.BindingContext);
+		}
+
+		[Fact]
+		public void NoMultiBindingActionWhenChildBindingDoNothing()
+		{
+			var defaultValue = "Foo Bar";
+			var multiConverter = new StringConcatenationConverter();
+			var group = new GroupViewModel();
+			var stack = new StackLayout
+			{
+				BindingContext = group
+			};
+
+			var surrogateObjProperty = BindableProperty.Create("Nonsense", typeof(object), typeof(Label), defaultValue);
+
+			var label = new Label();
+			label.SetBinding(
+				surrogateObjProperty,
+				new MultiBinding
+				{
+					Bindings = { new Binding(Binding.SelfPath) },
+					Converter = multiConverter,
+				});
+
+
+			label.BindingContext = group.Person5.FirstName;
+			stack.Children.Add(label);
+
+			Assert.Equal(group.Person5.FirstName, label.GetValue(surrogateObjProperty));
+
+			int savedConverts = multiConverter.Converts;
+
+			label.BindingContext = Binding.DoNothing;
+			Assert.Equal(savedConverts, multiConverter.Converts);
+			Assert.Equal(group.Person5.FirstName, label.GetValue(surrogateObjProperty));
+		}
+
 		//[Fact]
 		//public void TestEfficiency()
 		//{

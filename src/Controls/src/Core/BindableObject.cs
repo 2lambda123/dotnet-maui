@@ -242,21 +242,19 @@ namespace Microsoft.Maui.Controls
 			if (ReferenceEquals(oldContext, value))
 				return;
 
-			if (bpContext != null && oldContext == null)
-				oldContext = bpContext.Value;
-
 			if (bpContext != null && bpContext.Binding != null)
 			{
 				bpContext.Binding.Context = value;
 				bindable._inheritedContext = null;
+				bpContext.Binding.Unapply(fromBindingContextChanged: true);
+				bpContext.Binding.Apply(bpContext.Binding.Context, bindable, bpContext.Property, fromBindingContextChanged: true);
 			}
 			else
 			{
 				bindable._inheritedContext = new WeakReference(value);
+				bindable.ApplyBindings(skipBindingContext: true, fromBindingContextChanged: true);
+				bindable.OnBindingContextChanged();
 			}
-
-			bindable.ApplyBindings(skipBindingContext: false, fromBindingContextChanged: true);
-			bindable.OnBindingContextChanged();
 		}
 
 		protected void ApplyBindings() => ApplyBindings(skipBindingContext: false, fromBindingContextChanged: false);
@@ -287,10 +285,7 @@ namespace Microsoft.Maui.Controls
 		{
 			foreach (var context in _properties.Values)
 			{
-				if (context.Binding == null)
-					continue;
-
-				context.Binding.Unapply();
+				context.Binding?.Unapply();
 			}
 		}
 
@@ -514,7 +509,9 @@ namespace Microsoft.Maui.Controls
 			BindingBase binding = context.Binding;
 			if (binding != null)
 			{
-				if (clearOneWayBindings && binding.GetRealizedMode(property) == BindingMode.OneWay || clearTwoWayBindings && binding.GetRealizedMode(property) == BindingMode.TwoWay)
+				BindingMode realizedMode = binding.GetRealizedMode(property);
+				if (clearOneWayBindings && (realizedMode == BindingMode.OneTime || realizedMode == BindingMode.OneWay) ||
+					clearTwoWayBindings && realizedMode == BindingMode.TwoWay)
 				{
 					RemoveBinding(property, context);
 					binding = null;
@@ -538,31 +535,30 @@ namespace Microsoft.Maui.Controls
 
 		internal void ApplyBindings(bool skipBindingContext, bool fromBindingContextChanged)
 		{
-			var prop = _properties.Values.ToArray();
-			for (int i = 0, propLength = prop.Length; i < propLength; i++)
+			bool containsBindingContext = false;
+			var prop = _properties
+					   .Values
+					   .Where(bpc => bpc.Binding != null)
+					   .OrderByDescending(bpc => ReferenceEquals(bpc.Property, BindingContextProperty) && (containsBindingContext = true))
+					   .ToArray();
+
+			int i = skipBindingContext && containsBindingContext ? 1 : 0;
+			for (; i < prop.Length; i++)
 			{
 				BindablePropertyContext context = prop[i];
-				BindingBase binding = context.Binding;
-				if (binding == null)
-					continue;
 
-				if (skipBindingContext && ReferenceEquals(context.Property, BindingContextProperty))
-					continue;
-
-				binding.Unapply(fromBindingContextChanged: fromBindingContextChanged);
-				binding.Apply(BindingContext, this, context.Property, fromBindingContextChanged: fromBindingContextChanged);
+				context.Binding.Unapply(fromBindingContextChanged: fromBindingContextChanged);
+				context.Binding.Apply(BindingContext, this, context.Property, fromBindingContextChanged: fromBindingContextChanged);
 			}
 		}
 
 		static void BindingContextPropertyBindingChanging(BindableObject bindable, BindingBase oldBindingBase, BindingBase newBindingBase)
 		{
 			object context = bindable._inheritedContext?.Target;
-			var oldBinding = oldBindingBase as Binding;
-			var newBinding = newBindingBase as Binding;
 
-			if (context == null && oldBinding != null)
+			if (context == null && oldBindingBase is Binding oldBinding)
 				context = oldBinding.Context;
-			if (context != null && newBinding != null)
+			if (context != null && newBindingBase is Binding newBinding)
 				newBinding.Context = context;
 		}
 

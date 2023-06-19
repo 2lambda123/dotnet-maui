@@ -1427,6 +1427,94 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 		}
 #endif
 
+		class TestConverterReturn : IValueConverter
+		{
+			public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+			{
+				return value;
+			}
+
+			public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+			{
+				return value;
+			}
+		}
+
+		[Fact]
+		public void ConverterReturnsUnsetValue()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), "default");
+			bindable.SetBinding(property, new Binding("Object", converter: converter));
+			Assert.Equal("default", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = BindableProperty.UnsetValue;
+			Assert.Equal("default", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void ConverterReturnsDoNothing()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), "default");
+			bindable.SetBinding(property, new Binding("Object", converter: converter));
+			Assert.Equal("default", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = Binding.DoNothing;
+			Assert.Equal("Foo", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void ConvertBackReturnsUnsetValue()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), "default");
+			bindable.SetBinding(property, new Binding("Object", mode:BindingMode.OneWayToSource, converter: converter));
+			bindable.SetValue(property, "Baz");
+			bindable.BindingContext = vm;
+			Assert.Equal("Baz", vm.Object);
+			bindable.SetValue(property, BindableProperty.UnsetValue);
+			Assert.Equal("Baz", vm.Object);
+		}
+
+		[Fact]
+		public void ConvertBackReturnsDoNothing()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), "default");
+			bindable.SetBinding(property, new Binding("Object", mode: BindingMode.OneWayToSource, converter: converter));
+			bindable.SetValue(property, "Baz");
+			bindable.BindingContext = vm;
+			Assert.Equal("Baz", vm.Object);
+			bindable.SetValue(property, Binding.DoNothing);
+			Assert.Equal("Baz", vm.Object);
+		}
+
+		[Fact]
+		public void ConverterReturnsNull()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), "default");
+			bindable.SetBinding(property, new Binding("Object", converter: converter));
+			Assert.Equal("default", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = null;
+			Assert.Null(bindable.GetValue(property));
+		}
+
 		[Fact]
 		public void SelfBindingConverter()
 		{
@@ -1596,6 +1684,233 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 			bindable.BindingContext = vm;
 
 			Assert.Equal(2, vm.count);
+		}
+
+		public class RecursiveViewModel
+		{
+			private const char _firstChar = 'A';
+			private static char _next = _firstChar;
+			private RecursiveViewModel _data;
+			private readonly string _id;
+
+			// Not thread safe.
+			public static RecursiveViewModel GetInitialViewModel()
+			{
+				_next = _firstChar;
+				return new RecursiveViewModel();
+			}
+
+			private RecursiveViewModel(char id = _firstChar)
+			{
+				_id = $"{nameof(RecursiveViewModel)}_{id}";
+			}
+
+			public RecursiveViewModel Property
+			{
+				get
+				{
+					return _data ??= new RecursiveViewModel(++_next);
+				}
+			}
+
+			public override string ToString()
+			{
+				return _id;
+			}
+		}
+
+		public class CountingConverter : IValueConverter
+		{
+			public List<string> Values = new();
+
+			/// <inheritdoc />
+			public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+			{
+				var valueName = value is null ? "null" : value.ToString();
+
+				Values.Add( parameter is null ?
+					            valueName : $"{valueName} {parameter}");
+
+				return value;
+			}
+
+			/// <inheritdoc />
+			public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+			{
+				throw new NotSupportedException($"{nameof(CountingConverter)}.{nameof(this.ConvertBack)}");
+			}
+		}
+		
+		[Fact]
+		public void PropertyBindingsOccurAfterBindingContextBinding()
+		{
+			var counting = new CountingConverter();
+			var vm = new MockViewModel("foobar");
+			var stackLayout = new VerticalStackLayout();
+			var label = new Label();
+
+			// SetBinding order is important to testing. See BindableObject.ApplyBindings(bool, bool)
+			label.SetBinding(
+				Label.TextProperty,
+				new Binding(Binding.SelfPath, BindingMode.OneWay, counting, nameof(Label.TextProperty)));
+			label.SetBinding(
+				Label.AutomationIdProperty,
+				new Binding(Binding.SelfPath, BindingMode.OneWay, counting, nameof(Label.AutomationIdProperty)));
+			label.SetBinding(
+				Label.BindingContextProperty,
+				new Binding("Text", BindingMode.OneWay, counting, nameof(Label.BindingContextProperty)));
+			
+			stackLayout.Add( label );
+
+			Assert.Collection(counting.Values,
+			                  item => Assert.Equal($"null {nameof(Label.TextProperty)}", item),
+			                  item => Assert.Equal($"null {nameof(Label.AutomationIdProperty)}", item));
+
+			counting.Values.Clear();
+			stackLayout.BindingContext = vm;
+			Assert.Collection(counting.Values, 
+							  item => Assert.Equal($"foobar {nameof(Label.BindingContextProperty)}", item),
+							  item => Assert.Equal($"foobar {nameof(Label.TextProperty)}", item),
+							  item => Assert.Equal($"foobar {nameof(Label.AutomationIdProperty)}", item));
+		}
+
+		[Fact]
+		public void PropertyBindingsUpdateWhenAddedAsChild()
+		{
+			var countingOneTime = new CountingConverter();
+			var countingOneWay = new CountingConverter();
+			var stackLayout = new VerticalStackLayout();
+			var view = new VisualElement();
+			var bp1t = BindableProperty.Create("Foo", typeof(string), typeof(VisualElement));
+			var bp1w = BindableProperty.Create("Foo", typeof(string), typeof(VisualElement));
+			var vm = new MockViewModel("foobar");
+
+			view.SetBinding(bp1t, "Text", mode: BindingMode.OneTime, countingOneTime);
+			view.SetBinding(bp1w, "Text", mode: BindingMode.OneWay, countingOneWay);
+			
+			stackLayout.BindingContext = vm;
+
+			Assert.Empty(countingOneTime.Values);
+			Assert.Empty(countingOneWay.Values);
+
+			stackLayout.Add(view);
+
+			Assert.Collection(countingOneTime.Values, item => Assert.Equal("foobar", item));
+			Assert.Collection(countingOneWay.Values, item => Assert.Equal("foobar", item));
+
+			Assert.Equal("foobar", view.GetValue(bp1w));
+			Assert.Equal("foobar", view.GetValue(bp1t));
+		}
+
+		[Fact]
+		public void PropertyBindingsDontUpdateWhenAddedAsChildAfterManualSet()
+		{
+			var countingOneTime = new CountingConverter();
+			var countingOneWay = new CountingConverter();
+			var stackLayout = new VerticalStackLayout();
+			var view = new VisualElement();
+			var bp1t = BindableProperty.Create("Foo", typeof(string), typeof(VisualElement));
+			var bp1w = BindableProperty.Create("Foo", typeof(string), typeof(VisualElement));
+			var vm = new MockViewModel("foobar");
+			var parentVm = new MockViewModel("baz");
+
+			view.SetBinding(bp1t, "Text", mode: BindingMode.OneTime, countingOneTime);
+			view.SetBinding(bp1w, "Text", mode: BindingMode.OneWay, countingOneWay);
+
+			view.BindingContext = vm;
+
+			Assert.Collection(countingOneTime.Values, item => Assert.Equal("foobar", item));
+			Assert.Collection(countingOneWay.Values, item => Assert.Equal("foobar", item));
+			
+			stackLayout.BindingContext = parentVm;
+			stackLayout.Add(view);
+
+			Assert.Collection(countingOneTime.Values, item => Assert.Equal("foobar", item));
+			Assert.Collection(countingOneWay.Values, item => Assert.Equal("foobar", item));
+		}
+
+		[Fact]
+		public void PropertyBindingsDontDoubleApplyOnChildAdded()
+		{
+			var countingOneTime = new CountingConverter();
+			var countingOneWay = new CountingConverter();
+			var stackLayout = new VerticalStackLayout();
+			var view = new VisualElement();
+			var bp1t = BindableProperty.Create("Foo", typeof(string), typeof(VisualElement));
+			var bp1w = BindableProperty.Create("Foo", typeof(string), typeof(VisualElement));
+			var vm = new MockViewModel("foobar");
+
+			stackLayout.BindingContext = vm;
+			view.SetBinding(bp1t, "Text", mode: BindingMode.OneTime, countingOneTime);
+			view.SetBinding(bp1w, "Text", mode: BindingMode.OneWay, countingOneWay);
+
+			stackLayout.Add( view );
+
+			Assert.Collection(countingOneTime.Values, item => Assert.Equal("foobar", item));
+			Assert.Collection(countingOneWay.Values, item => Assert.Equal("foobar", item));
+
+			Assert.Equal("foobar", view.GetValue(bp1w));
+			Assert.Equal("foobar", view.GetValue(bp1t));
+		}
+
+		[Fact]
+		public void BindingContextBindingsDontDoubleApplyOnChildAdded()
+		{
+			var rvm = RecursiveViewModel.GetInitialViewModel();
+			var countingTop = new CountingConverter();
+			var countingBottom = new CountingConverter();
+			var contentPage = new ContentPage();
+
+			var stackLayout = new VerticalStackLayout();
+			stackLayout.SetBinding(
+				ContentView.BindingContextProperty,
+				new Binding(nameof(RecursiveViewModel.Property), BindingMode.OneTime, countingTop));
+
+			var contentView = new ContentView();
+			contentView.SetBinding(
+				ContentView.BindingContextProperty,
+				new Binding(nameof(RecursiveViewModel.Property), BindingMode.OneTime, countingBottom));
+
+			contentPage.Content = stackLayout;
+			contentPage.BindingContext = rvm;
+
+			stackLayout.Add(contentView);
+
+			Assert.Collection(countingTop.Values, item => Assert.Equal($"{nameof(RecursiveViewModel)}_B", item));
+			Assert.Collection(countingBottom.Values, item => Assert.Equal($"{nameof(RecursiveViewModel)}_C", item));
+
+			Assert.Equal(rvm.Property, stackLayout.BindingContext);
+			Assert.Equal(rvm.Property.Property, contentView.BindingContext);
+		}
+
+		[Fact]
+		public void BindingContextBindingsDontDoubleApplyOnParentUpdates()
+		{
+			var rvm = RecursiveViewModel.GetInitialViewModel();
+			var countingTop = new CountingConverter();
+			var countingBottom = new CountingConverter();
+			var contentPage = new ContentPage();
+
+			var stackLayout = new VerticalStackLayout();
+			stackLayout.SetBinding(
+				ContentView.BindingContextProperty,
+				new Binding(nameof(RecursiveViewModel.Property), BindingMode.OneTime, countingTop));
+			
+			var contentView = new ContentView();
+			contentView.SetBinding(
+				ContentView.BindingContextProperty,
+				new Binding(nameof(RecursiveViewModel.Property), BindingMode.OneTime, countingBottom));
+
+			contentPage.Content = stackLayout;
+			stackLayout.Add( contentView );
+
+			contentPage.BindingContext = rvm;
+
+			Assert.Collection(countingTop.Values, item => Assert.Equal($"{nameof(RecursiveViewModel)}_B", item));
+			Assert.Collection(countingBottom.Values, item => Assert.Equal($"{nameof(RecursiveViewModel)}_C", item));
+
+			Assert.Equal(rvm.Property, stackLayout.BindingContext);
+			Assert.Equal(rvm.Property.Property, contentView.BindingContext);
 		}
 
 		[Fact("When there are multiple bindings, an update in one should not cause the other to udpate.")]
@@ -2211,6 +2526,40 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 		}
 
 		[Fact]
+		public void OneTimeBindingOnBindingContextIsUnappliedOnManualSet()
+		{
+			var view = new VisualElement();
+			var vm = new MockViewModel("foobar");
+
+			var binding = new Binding("Text", mode: BindingMode.OneTime);
+			view.SetBinding(VisualElement.BindingContextProperty, binding);
+
+			Assert.True(binding.IsApplied);
+
+			view.BindingContext = vm;
+
+			Assert.False(binding.IsApplied);
+			Assert.Equal(vm, view.GetValue(VisualElement.BindingContextProperty));
+		}
+
+		[Fact]
+		public void OneWayBindingOnBindingContextIsUnappliedOnManualSet()
+		{
+			var view = new VisualElement();
+			var vm = new MockViewModel("foobar");
+
+			var binding = new Binding("Text", mode: BindingMode.OneWay);
+			view.SetBinding(VisualElement.BindingContextProperty, binding);
+
+			Assert.True(binding.IsApplied);
+
+			view.BindingContext = vm;
+
+			Assert.False(binding.IsApplied);
+			Assert.Equal(vm, view.GetValue(VisualElement.BindingContextProperty));
+		}
+
+		[Fact]
 		public void OneTimeBindingDoesntUpdateOnPropertyChanged()
 		{
 			var view = new VisualElement();
@@ -2255,30 +2604,175 @@ namespace Microsoft.Maui.Controls.Core.UnitTests
 		}
 
 		[Fact]
-		//https://github.com/xamarin/Xamarin.Forms/issues/3467
+		public void FallbackValueUsedWhenBindingCantBeResolved()
+		{
+			var bindable = new MockBindable();
+			var property = BindableProperty.Create("Foo", typeof(string), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.BindingContext = new MockViewModel { Text = "Foo" };
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+			bindable.SetBinding(property, new Binding("UndefinedProperty" ) { FallbackValue = "fallback" });
+			Assert.Equal("fallback", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void FallbackValueIgnoredWhenBindingIsResolved()
+		{
+			var bindable = new MockBindable();
+			var property = BindableProperty.Create("Foo", typeof(string), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("Text") { FallbackValue = "fallback" });
+			Assert.Equal("fallback", bindable.GetValue(property));
+			bindable.BindingContext = new MockViewModel { Text = "Foo" };
+			Assert.Equal("Foo", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void FallbackValueWhenValueConverterReturnsUnsetValue()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("Object", converter: converter) { FallbackValue = "fallback" });
+			Assert.Equal("fallback", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = BindableProperty.UnsetValue;
+			Assert.Equal("fallback", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void FallbackValueIgnoredWhenValueConverterReturnsDoNothing()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("Object", converter: converter) { FallbackValue = "fallback" });
+			Assert.Equal("fallback", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = Binding.DoNothing;
+			Assert.Equal("Foo", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void FallbackValueIgnoredWhenValueConverterReturnsNull()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("Object", converter: converter) { FallbackValue = "fallback" });
+			Assert.Equal("fallback", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = null;
+			Assert.Null(bindable.GetValue(property));
+		}
+
+		[Fact]
+		//https://github.com/xamarin/Microsoft.Maui.Controls/issues/3467
 		public void TargetNullValueIgnoredWhenBindingIsResolved()
 		{
 			var bindable = new MockBindable();
 			var property = BindableProperty.Create("Foo", typeof(string), typeof(MockBindable), "default");
-			bindable.SetBinding(property, new Binding("Text") { TargetNullValue = "fallback" });
+			bindable.SetBinding(property, new Binding("Text") { TargetNullValue = "targetnull" });
 			Assert.Equal("default", bindable.GetValue(property));
 			bindable.BindingContext = new MockViewModel { Text = "Foo" };
 			Assert.Equal("Foo", bindable.GetValue(property));
 		}
 
 		[Fact]
-		public void TargetNullValueFallback()
+		public void TargetNullValueUsedWhenBindingResolvesToNull()
 		{
 			var bindable = new MockBindable();
 			var property = BindableProperty.Create("Foo", typeof(string), typeof(MockBindable), "default");
-			bindable.SetBinding(property, new Binding("Text") { TargetNullValue = "fallback" });
+			bindable.SetBinding(property, new Binding("Text") { TargetNullValue = "targetnull" });
 			Assert.Equal("default", bindable.GetValue(property));
 			bindable.BindingContext = new MockViewModel();
+			Assert.Equal("targetnull", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void TargetNullValueIgnoredWhenBindingCantBeResolved()
+		{
+			var bindable = new MockBindable();
+			var property = BindableProperty.Create("Foo", typeof(string), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("UndefinedProperty") { TargetNullValue = "targetnull" });
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+			bindable.BindingContext = new MockViewModel();
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void TargetNullValueIgnoredWhenValueConverterReturnsUnsetValue()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("Object", converter: converter) { TargetNullValue = "targetnull" });
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = BindableProperty.UnsetValue;
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void TargetNullValueIgnoredWhenValueConverterReturnsDoNothing()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("Object", converter: converter) { TargetNullValue = "targetnull" });
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = Binding.DoNothing;
+			Assert.Equal("Foo", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void TargetNullValueAppliedWhenValueConverterReturnsNull()
+		{
+			var converter = new TestConverterReturn();
+			var bindable = new MockBindable();
+			var vm = new MockViewModel() { Object = "Foo" };
+			var property = BindableProperty.Create("Blah", typeof(object), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("Object", converter: converter) { TargetNullValue = "targetnull" });
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+			bindable.BindingContext = vm;
+			Assert.Equal("Foo", bindable.GetValue(property));
+			vm.Object = null;
+			Assert.Equal("targetnull", bindable.GetValue(property));
+		}
+
+		[Fact]
+		public void StringFormatIgnoredWhenFallbackValueUsed()
+		{
+			var bindable = new MockBindable();
+			var property = BindableProperty.Create("Foo", typeof(string), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.BindingContext = new MockViewModel { Text = "Foo" };
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+			bindable.SetBinding(property, new Binding("UndefinedProperty", stringFormat: "Formatted {0}") { FallbackValue = "fallback" });
 			Assert.Equal("fallback", bindable.GetValue(property));
 		}
 
 		[Fact]
-		//https://github.com/xamarin/Xamarin.Forms/issues/3994
+		public void StringFormatIgnoredWhenTargetNullValueUsed()
+		{
+			var bindable = new MockBindable();
+			var property = BindableProperty.Create("Foo", typeof(string), typeof(MockBindable), defaultValueCreator: b => "defaultCreator");
+			bindable.SetBinding(property, new Binding("Text", stringFormat:"Formatted {0}") { TargetNullValue = "targetnull" });
+			Assert.Equal("defaultCreator", bindable.GetValue(property));
+			bindable.BindingContext = new MockViewModel();
+			Assert.Equal("targetnull", bindable.GetValue(property));
+		}
+
+		[Fact]
+		//https://github.com/xamarin/Microsoft.Maui.Controls/issues/3994
 		public void INPCOnBindingWithSource()
 		{
 			var page = new ContentPage { Title = "Foo" };
