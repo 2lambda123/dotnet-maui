@@ -344,3 +344,4 @@ Microsoft.Maui.Controls.StyleableElement.class.set -> void
 *REMOVED*~Microsoft.Maui.Controls.NavigableElement.Style.set -> void
 *REMOVED*~Microsoft.Maui.Controls.NavigableElement.StyleClass.get -> System.Collections.Generic.IList<string>
 *REMOVED*~Microsoft.Maui.Controls.NavigableElement.StyleClass.set -> void
+Microsoft.Maui.Controls.VisualElement.RefreshIsVisibleProperty() -> void
