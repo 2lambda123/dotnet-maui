@@ -1,4 +1,5 @@
 using System;
+using Foundation;
 using UIKit;
 
 namespace Microsoft.Maui.Platform
@@ -25,8 +26,18 @@ namespace Microsoft.Maui.Platform
 				platformButton.Layer.CornerRadius = buttonStroke.CornerRadius;
 		}
 
-		public static void UpdateText(this UIButton platformButton, IText button) =>
+		public static void UpdateText(this UIButton platformButton, IText button) 
+		{
 			platformButton.SetTitle(button.Text, UIControlState.Normal);
+
+			if (OperatingSystem.IsIOSVersionAtLeast(15) && platformButton.Configuration is UIButtonConfiguration config)
+			{
+				config.Title = button.Text;
+				platformButton.Configuration = config;
+			}
+
+			UpdateCharacterSpacing(platformButton, button);
+		}
 
 		public static void UpdateTextColor(this UIButton platformButton, ITextStyle button)
 		{
@@ -44,16 +55,53 @@ namespace Microsoft.Maui.Platform
 
 		public static void UpdateCharacterSpacing(this UIButton platformButton, ITextStyle textStyle)
 		{
-			var attributedText = platformButton?.TitleLabel.AttributedText?.WithCharacterSpacing(textStyle.CharacterSpacing);
+			object? config = OperatingSystem.IsIOSVersionAtLeast(15) ? platformButton.Configuration : null;
+
+			// This is probalby wrong and needs to be tested more
+			NSAttributedString? nSAttributedString = (config as UIButtonConfiguration)?.AttributedTitle ?? platformButton.TitleLabel?.AttributedText;
+
+			if (nSAttributedString is null && textStyle is IText text && text.Text is not null)
+			{
+				nSAttributedString = new NSAttributedString(text.Text);
+			}
+			else if (nSAttributedString is null)
+			{
+				return;
+			}
+
+			var attributedText = nSAttributedString.WithCharacterSpacing(textStyle.CharacterSpacing);
 			if (textStyle.TextColor != null)
 				attributedText = attributedText?.WithTextColor(textStyle.TextColor);
 
-			platformButton?.SetAttributedTitle(attributedText, UIControlState.Normal);
+			if (config is UIButtonConfiguration buttonConfig)
+			{
+				buttonConfig.AttributedTitle = attributedText;
+				platformButton.Configuration = buttonConfig;
+			}
+			else
+			{
+				platformButton.SetAttributedTitle(attributedText, UIControlState.Normal);
+			}
 		}
 
 		public static void UpdateFont(this UIButton platformButton, ITextStyle textStyle, IFontManager fontManager)
 		{
-			platformButton.TitleLabel.UpdateFont(textStyle, fontManager, UIFont.ButtonFontSize);
+			if (platformButton.TitleLabel is not null)
+				platformButton.TitleLabel.UpdateFont(textStyle, fontManager, UIFont.ButtonFontSize);
+
+			// If iOS 15+, update the configuration with the new font
+			if (OperatingSystem.IsIOSVersionAtLeast(15) && platformButton.Configuration is UIButtonConfiguration config && textStyle is IText text)
+			{
+				var attributedText = config.AttributedTitle ?? platformButton.TitleLabel?.AttributedText ??
+					new NSAttributedString (text.Text);
+
+				var newAttributedText = attributedText.WithFont(fontManager.GetFont(textStyle.Font, textStyle.Font.Size));
+
+				// TODO: this should get saved from the configuration but is not currently so we will use teh SetAttributedTitle for now.
+				platformButton.SetAttributedTitle(newAttributedText, UIControlState.Normal);
+				config.AttributedTitle = newAttributedText;
+				platformButton.Configuration = config;
+			}
 		}
 
 		public static void UpdatePadding(this UIButton platformButton, IButton button, Thickness? defaultPadding = null) =>
@@ -73,15 +121,26 @@ namespace Microsoft.Maui.Platform
 			if (bottom == 0.0)
 				bottom = AlmostZero;
 
-#pragma warning disable CA1416 // TODO: 'UIButton.ContentEdgeInsets' is unsupported on: 'ios' 15.0 and later.
+			if (OperatingSystem.IsIOSVersionAtLeast(15) && platformButton.Configuration is UIButtonConfiguration config)
+			{
+				config.ContentInsets = new NSDirectionalEdgeInsets (
+					(float)top,
+					(float)padding.Left,
+					(float)bottom,
+					(float)padding.Right);
+				platformButton.Configuration = config;
+			}
+			else
+			{
+				// ImageButton still will use the deprecated UIEdgeInsets for now.
 #pragma warning disable CA1422 // Validate platform compatibility
-			platformButton.ContentEdgeInsets = new UIEdgeInsets(
-				(float)top,
-				(float)padding.Left,
-				(float)bottom,
-				(float)padding.Right);
+				platformButton.ContentEdgeInsets = new UIEdgeInsets(
+					(float)top,
+					(float)padding.Left,
+					(float)bottom,
+					(float)padding.Right);
 #pragma warning restore CA1422 // Validate platform compatibility
-#pragma warning restore CA1416
+			}
 		}
 	}
 }
