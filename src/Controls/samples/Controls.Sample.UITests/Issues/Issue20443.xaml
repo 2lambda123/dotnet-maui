@@ -14,8 +14,8 @@
                 ItemSizingStrategy="MeasureAllItems"
                 ItemsSource="{Binding Items}">
                 <CollectionView.ItemTemplate>
-                    <local:TemplateSelector>
-                        <local:TemplateSelector.ItemATemplate>
+                    <local:Issue20443TemplateSelector>
+                        <local:Issue20443TemplateSelector.ItemATemplate>
                             <DataTemplate>
                                 <Grid
                                     HeightRequest="20"
@@ -23,8 +23,8 @@
                                     <Label Text="20"/>
                                 </Grid>
                             </DataTemplate>
-                        </local:TemplateSelector.ItemATemplate>
-                        <local:TemplateSelector.ItemBTemplate>
+                        </local:Issue20443TemplateSelector.ItemATemplate>
+                        <local:Issue20443TemplateSelector.ItemBTemplate>
                             <DataTemplate>
                                 <Grid
                                     HeightRequest="100"
@@ -32,8 +32,8 @@
                                     <Label Text="100"/>
                                 </Grid>
                             </DataTemplate>
-                        </local:TemplateSelector.ItemBTemplate>
-                    </local:TemplateSelector>
+                        </local:Issue20443TemplateSelector.ItemBTemplate>
+                    </local:Issue20443TemplateSelector>
                 </CollectionView.ItemTemplate>
                 
             </CollectionView>
