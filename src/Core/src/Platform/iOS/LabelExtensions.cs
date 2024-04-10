@@ -105,6 +105,12 @@ namespace Microsoft.Maui.Platform
 					{
 						attributedString.AddAttribute(UIStringAttributeKey.Font, uiFontAttribute, range);
 					}
+
+					if(label?.TextColor != null)
+					{
+						var color = label.TextColor.ToPlatform();
+						attributedString.AddAttribute(UIStringAttributeKey.ForegroundColor, color, range);
+					}
 				});
 
 			platformLabel.AttributedText = attributedString;
