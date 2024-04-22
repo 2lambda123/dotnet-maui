@@ -18,6 +18,7 @@
             HorizontalOptions="Fill"
             VerticalOptions="Fill"
             x:Name="picker"
+            AutomationId="picker"
             HorizontalTextAlignment="Center"
             VerticalTextAlignment="Center"
             SelectedIndex="0"

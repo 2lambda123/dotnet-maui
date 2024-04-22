@@ -15,6 +15,8 @@ namespace Microsoft.Maui.AppiumTests.Issues
 		{
 			this.IgnoreIfPlatforms(new[] { TestDevice.Mac, TestDevice.iOS, TestDevice.Windows });
 
+			_ = App.WaitForElement("picker");
+
 			VerifyScreenshot();
 		}
 	}
