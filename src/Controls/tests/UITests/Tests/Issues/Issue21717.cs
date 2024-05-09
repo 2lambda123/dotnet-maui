@@ -11,11 +11,13 @@ namespace Microsoft.Maui.AppiumTests.Issues
 		public Issue21717(TestDevice device) : base(device) { }
 
 		[Test]
-		public void VerticalTextAlignmentShouldWork()
+		public async Task VerticalTextAlignmentShouldWork()
 		{
 			this.IgnoreIfPlatforms(new[] { TestDevice.Mac, TestDevice.iOS, TestDevice.Windows });
 
 			_ = App.WaitForElement("picker");
+
+			await Task.Delay(500);
 
 			VerifyScreenshot();
 		}
