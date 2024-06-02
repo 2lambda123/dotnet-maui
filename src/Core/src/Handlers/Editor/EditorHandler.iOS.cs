@@ -134,12 +134,18 @@ namespace Microsoft.Maui.Handlers
 #if !MACCATALYST
 			if (editor.IsEnabled)
 			{
-				var _accessoryView = new MauiDoneAccessoryView();
-				_accessoryView.SetDataContext(handler);
-				_accessoryView.SetDoneClicked(OnDoneClicked);
-				handler.PlatformView.InputAccessoryView = _accessoryView;
+				MauiDoneAccessoryView mauiDoneAccessoryView;
+				if (handler.PlatformView.InputAccessoryView is MauiDoneAccessoryView accessoryView)
+					mauiDoneAccessoryView = accessoryView;
+				else
+					mauiDoneAccessoryView = new MauiDoneAccessoryView();
+
+				mauiDoneAccessoryView.SetDataContext(handler);
+				mauiDoneAccessoryView.SetDoneClicked(OnDoneClicked);
+
+				handler.PlatformView.InputAccessoryView = mauiDoneAccessoryView;
 			}
-			else
+			else if (handler.PlatformView.InputAccessoryView is MauiDoneAccessoryView)
 			{
 				handler.PlatformView.InputAccessoryView = null;
 			}

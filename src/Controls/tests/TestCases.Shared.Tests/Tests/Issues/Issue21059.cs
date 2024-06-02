@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿#if IOS
+using NUnit.Framework;
 using UITest.Appium;
 using UITest.Core;
 
@@ -15,8 +16,6 @@ public class Issue21059 : _IssuesUITest
     [Test]
 	public async Task ToolbarShouldNotBeVisibleAfterClickingDisabledEditor()
 	{
-		this.IgnoreIfPlatforms(new TestDevice[] { TestDevice.Android, TestDevice.Mac, TestDevice.Windows });
-
 		_ = App.WaitForElement("editor");
 		App.Click("editor");
 
@@ -27,3 +26,4 @@ public class Issue21059 : _IssuesUITest
 		VerifyScreenshot();       
 	}
 }
+#endif
