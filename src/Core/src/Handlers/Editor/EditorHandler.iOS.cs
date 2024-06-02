@@ -13,7 +13,16 @@ namespace Microsoft.Maui.Handlers
 
 		protected override MauiTextView CreatePlatformView()
 		{
-			return new MauiTextView();
+			var platformEditor = new MauiTextView();
+
+#if !MACCATALYST
+			var accessoryView = new MauiDoneAccessoryView();
+			accessoryView.SetDataContext(this);
+			accessoryView.SetDoneClicked(OnDoneClicked);
+			platformEditor.InputAccessoryView = accessoryView;
+#endif
+
+			return platformEditor;
 		}
 
 #if !MACCATALYST
@@ -132,24 +141,10 @@ namespace Microsoft.Maui.Handlers
 		public static void MapIsEnabled(IEditorHandler handler, IEditor editor)
 		{
 #if !MACCATALYST
-			if (editor.IsEnabled)
-			{
-				MauiDoneAccessoryView mauiDoneAccessoryView;
-				if (handler.PlatformView.InputAccessoryView is MauiDoneAccessoryView accessoryView)
-					mauiDoneAccessoryView = accessoryView;
-				else
-					mauiDoneAccessoryView = new MauiDoneAccessoryView();
-
-				mauiDoneAccessoryView.SetDataContext(handler);
-				mauiDoneAccessoryView.SetDoneClicked(OnDoneClicked);
-
-				handler.PlatformView.InputAccessoryView = mauiDoneAccessoryView;
-			}
-			else if (handler.PlatformView.InputAccessoryView is MauiDoneAccessoryView)
-			{
-				handler.PlatformView.InputAccessoryView = null;
-			}
+			if (handler.PlatformView.InputAccessoryView is MauiDoneAccessoryView accessoryView)
+				accessoryView.Hidden = !editor.IsEnabled;
 #endif
+
 			handler.PlatformView?.UpdateIsEnabled(editor);
 		}
 
