@@ -1,8 +1,9 @@
 ﻿using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using UITest.Appium;
 using UITest.Core;
 
-namespace Microsoft.Maui.AppiumTests.Issues
+namespace Microsoft.Maui.TestCases.Tests.Issues
 {
 	public class Issue18946 : _IssuesUITest
 	{
@@ -17,7 +18,7 @@ namespace Microsoft.Maui.AppiumTests.Issues
 			var label = App.WaitForElement("label");
 			_ = App.WaitForElement("image");
 
-			Assert.True(label.GetText() == "Hello");
+			ClassicAssert.True(label.GetText() == "Hello");
 		}
 	}
 }
