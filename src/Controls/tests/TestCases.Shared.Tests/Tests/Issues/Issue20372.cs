@@ -1,8 +1,9 @@
-﻿using NUnit.Framework;
+﻿#if IOS
+using NUnit.Framework;
 using UITest.Appium;
 using UITest.Core;
 
-namespace Microsoft.Maui.AppiumTests.Issues
+namespace Microsoft.Maui.TestCases.Tests.Issues
 {
 	public class Issue20372 : _IssuesUITest
 	{
@@ -15,8 +16,6 @@ namespace Microsoft.Maui.AppiumTests.Issues
 		[Test]
 		public void BothHtmlLabelsShouldApplyBoldAndItalicaProperties()
 		{
-			this.IgnoreIfPlatforms(new TestDevice[] { TestDevice.Mac, TestDevice.Windows, TestDevice.Android });
-
 			_ = App.WaitForElement("label1");
 
 			// Both labels should have proper text attributes
@@ -24,3 +23,4 @@ namespace Microsoft.Maui.AppiumTests.Issues
 		}
 	}
 }
+#endif
