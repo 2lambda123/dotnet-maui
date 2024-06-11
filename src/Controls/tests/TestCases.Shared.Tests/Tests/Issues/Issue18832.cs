@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿#if IOS
+using NUnit.Framework;
 using UITest.Appium;
 using UITest.Core;
 
@@ -15,8 +16,6 @@ namespace Microsoft.Maui.TestCases.Tests.Issues
 		[Test]
 		public void SizesOfBothTextsShouldHaveTheSameAndCharacterSpacing()
 		{
-			this.IgnoreIfPlatforms(new TestDevice[] { TestDevice.Android, TestDevice.Mac, TestDevice.Windows });
-
 			_ = App.WaitForElement("button");
 
 			// The test passes if both "Hello, World!" texts are of the same size
@@ -25,3 +24,4 @@ namespace Microsoft.Maui.TestCases.Tests.Issues
 		}
 	}
 }
+#endif
