@@ -1,9 +1,11 @@
-﻿using NUnit.Framework;
+﻿#if ANDROID
+using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using OpenQA.Selenium.Appium;
 using UITest.Appium;
 using UITest.Core;
 
-namespace Microsoft.Maui.AppiumTests.Issues
+namespace Microsoft.Maui.TestCases.Tests.Issues
 {
 	public class Issue18797 : _IssuesUITest
 	{
@@ -16,7 +18,6 @@ namespace Microsoft.Maui.AppiumTests.Issues
 		[Test]
 		public void DatePickerFocusedAndUnfocusedEventsShouldFire()
 		{
-			this.IgnoreIfPlatforms(new TestDevice[] { TestDevice.iOS, TestDevice.Mac, TestDevice.Windows });
 			_ = App.WaitForElement("datePicker");
 
 			App.Click("datePicker");
@@ -26,8 +27,9 @@ namespace Microsoft.Maui.AppiumTests.Issues
 			var focusedLabelText = App.FindElement("focusedLabel").GetText();
 			var unfocusedLabelText = App.FindElement("unfocusedLabel").GetText();
 
-			Assert.True(focusedLabelText == "Focused: true");
-			Assert.True(unfocusedLabelText == "Unfocused: true");
+			ClassicAssert.True(focusedLabelText == "Focused: true");
+			ClassicAssert.True(unfocusedLabelText == "Unfocused: true");
 		}
 	}
 }
+#endif
