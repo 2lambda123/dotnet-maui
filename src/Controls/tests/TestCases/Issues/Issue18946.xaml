@@ -10,10 +10,12 @@
     </Shell.TitleView>
 
     <Shell.ToolbarItems>
-        <ToolbarItem AutomationId="label" Text="Hello"/>
+        <ToolbarItem Text="Hello"/>
     </Shell.ToolbarItems>
 
     <ShellContent Title="Home" Route="MainPage">
-        <ContentPage/>
+        <ContentPage>
+            <Label Text="Hello, MAUI!" AutomationId="label"/>
+        </ContentPage>
     </ShellContent>
 </Shell>

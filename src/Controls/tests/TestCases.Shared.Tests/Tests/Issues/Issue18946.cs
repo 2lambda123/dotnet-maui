@@ -15,10 +15,10 @@ namespace Microsoft.Maui.TestCases.Tests.Issues
 		[Test]
 		public void ToolbarItemsShouldBeVisible()
 		{
-			var label = App.WaitForElement("label");
-			_ = App.WaitForElement("image");
+			_ = App.WaitForElement("label");
 
-			ClassicAssert.True(label.GetText() == "Hello");
+			// The test passes if the text 'hello' is visible in the toolbar
+			VerifyScreenshot();
 		}
 	}
 }
