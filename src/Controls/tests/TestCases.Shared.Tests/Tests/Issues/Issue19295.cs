@@ -1,9 +1,11 @@
-﻿using NUnit.Framework;
+﻿#if IOS
+using NUnit.Framework;
+using NUnit.Framework.Legacy;
 using OpenQA.Selenium.Appium;
 using UITest.Appium;
 using UITest.Core;
 
-namespace Microsoft.Maui.AppiumTests.Issues
+namespace Microsoft.Maui.TestCases.Tests.Issues
 {
 	public class Issue19295 : _IssuesUITest
 	{
@@ -14,8 +16,6 @@ namespace Microsoft.Maui.AppiumTests.Issues
 		[Test]
 		public void PickerShouldResizeAfterChangingSelection()
 		{
-			this.IgnoreIfPlatforms(new TestDevice[] { TestDevice.Android, TestDevice.Mac, TestDevice.Windows });
-
 			App.WaitForElement("picker");
 
 			var picker = App.FindElement("picker");
@@ -25,7 +25,8 @@ namespace Microsoft.Maui.AppiumTests.Issues
 			((AppiumApp)App)?.Driver.FindElement(MobileBy.ClassName("XCUIElementTypePickerWheel")).SendKeys("Japanese Macaque");
 			var sizeWithSecondElementSelected = picker.GetRect().Width;
 
-			Assert.AreNotEqual(sizeWithFirstElementSelected, sizeWithSecondElementSelected, "Picker size did not change after selecting an item");
+			ClassicAssert.AreNotEqual(sizeWithFirstElementSelected, sizeWithSecondElementSelected, "Picker size did not change after selecting an item");
 		}
 	}
 }
+#endif
