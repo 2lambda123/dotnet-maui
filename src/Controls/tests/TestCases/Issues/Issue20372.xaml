@@ -14,6 +14,7 @@
     <VerticalStackLayout Margin="20">
 
         <Label TextType="Html"
+               AutomationId="label1"
                x:Name="label1"
                Style="{StaticResource PrimaryStyle}">
             <Label.Text>
