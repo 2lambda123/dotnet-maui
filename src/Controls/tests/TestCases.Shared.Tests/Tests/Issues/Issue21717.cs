@@ -1,8 +1,9 @@
-﻿using NUnit.Framework;
+﻿#if ANDROID
+using NUnit.Framework;
 using UITest.Appium;
 using UITest.Core;
 
-namespace Microsoft.Maui.AppiumTests.Issues
+namespace Microsoft.Maui.TestCases.Tests.Issues
 {
 	public class Issue21717 : _IssuesUITest
 	{
@@ -13,8 +14,6 @@ namespace Microsoft.Maui.AppiumTests.Issues
 		[Test]
 		public async Task VerticalTextAlignmentShouldWork()
 		{
-			this.IgnoreIfPlatforms(new[] { TestDevice.Mac, TestDevice.iOS, TestDevice.Windows });
-
 			_ = App.WaitForElement("picker");
 
 			await Task.Delay(500);
@@ -23,3 +22,4 @@ namespace Microsoft.Maui.AppiumTests.Issues
 		}
 	}
 }
+#endif
