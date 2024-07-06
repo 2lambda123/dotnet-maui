@@ -60,9 +60,6 @@ namespace Microsoft.Maui.Controls
 				propertyName == BackgroundProperty.PropertyName ||
 				propertyName == CornerRadiusProperty.PropertyName)
 				Handler?.UpdateValue(nameof(IShapeView.Shape));
-
-			if(propertyName == IsVisibleProperty.PropertyName)
-				Handler?.ToPlatform()?.UpdateBackground(this);
 		}
 
 		IShape? IShapeView.Shape => this;
