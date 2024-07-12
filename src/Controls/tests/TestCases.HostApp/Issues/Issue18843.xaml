@@ -5,7 +5,7 @@
              x:Class="Maui.Controls.Sample.Issues.Issue18843">
 
     <NavigationPage.TitleView>
-        <HorizontalStackLayout BackgroundColor="red">
+        <HorizontalStackLayout Margin="0" BackgroundColor="red">
             <Label VerticalOptions="Center"
                    Text="Navigation page's title"
                    AutomationId="title"/>
