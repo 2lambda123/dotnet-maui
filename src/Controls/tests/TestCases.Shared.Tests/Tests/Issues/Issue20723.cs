@@ -14,6 +14,7 @@ namespace Microsoft.Maui.TestCases.Tests.Issues
 		}
 
 		[Test]
+		[Category(UITestCategories.ActivityIndicator)]
 		public async Task IndicatorShouldNotBeCoveredByHeader()
 		{
 			_ = App.WaitForElement("refreshView");
