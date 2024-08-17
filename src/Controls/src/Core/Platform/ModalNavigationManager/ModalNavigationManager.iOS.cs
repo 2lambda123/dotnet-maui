@@ -143,7 +143,6 @@ namespace Microsoft.Maui.Controls.Platform
 					//This is branched, because if the modal is a popover and can't display correctly for some reason, we want it to fail
 					if(wrapper.ModalPresentationStyle == UIKit.UIModalPresentationStyle.Popover){
 						if(wrapper.PopoverPresentationController != null && WindowViewController.View != null){
-								//wrapper.PopoverPresentationController.SourceRect = new CoreGraphics.CGRect(100,100,10,10);
 								await WindowViewController.PresentViewControllerAsync(wrapper, animated);
 								await Task.Delay(5);
 						}
