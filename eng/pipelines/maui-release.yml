@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
     - main
+    - net9.0
     - release/*
   tags:
     include:
@@ -26,7 +27,6 @@ schedules:
   branches:
     include:
     - main
-    - net9.0
 
 variables:
   - template: /eng/pipelines/common/variables.yml@self
@@ -144,9 +144,7 @@ extends:
                 value: $(Build.SourcesDirectory)/build.cmd -ci
               - name: _BuildConfig
                 value: Release
-              - name: _BuildOfficalId
-                value: $[ format('{0}.{1}', format('{0:yyyyMMdd}', pipeline.startTime), counter(format('{0:yyyyMMdd}', pipeline.startTime), 1) )]
-            
+
             steps:
               - template: /eng/pipelines/common/pack.yml@self
                 parameters:
@@ -196,6 +194,7 @@ extends:
             vmImage: ${{ parameters.VM_IMAGE_HOST.image }}
             os: ${{ parameters.VM_IMAGE_HOST.os }}     
             scanArtifacts: ['${{ parameters.PackPlatform.binariesArtifact }}']
+            softwareVersion: 9.0
 
         - ${{ if eq(variables['Build.Reason'], 'Schedule') }}:
           - template: /eng/pipelines/common/push-nightly.yml@self

@@ -17,6 +17,7 @@ using Microsoft.Maui.Devices;
 using Microsoft.Maui.Foldable;
 using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
+
 #if COMPATIBILITY_ENABLED
 using Microsoft.Maui.Controls.Compatibility.Hosting;
 #endif
@@ -39,6 +40,8 @@ namespace Maui.Controls.Sample
 	{
 		static bool UseMauiGraphicsSkia = false;
 
+		static bool UseCollectionView2 = true;
+
 		enum PageType { Main, Blazor, Shell, Template, FlyoutPage, TabbedPage }
 		readonly static PageType _pageType = PageType.Main;
 
@@ -57,6 +60,18 @@ namespace Maui.Controls.Sample
 #endif
 			appBuilder.UseMauiApp<XamlApp>();
 			var services = appBuilder.Services;
+
+			if (UseCollectionView2)
+			{
+#if IOS || MACCATALYST
+			
+				appBuilder.ConfigureMauiHandlers(handlers =>
+				{
+					handlers.AddHandler<Microsoft.Maui.Controls.CollectionView, Microsoft.Maui.Controls.Handlers.Items2.CollectionViewHandler2>();
+					handlers.AddHandler<Microsoft.Maui.Controls.CarouselView, Microsoft.Maui.Controls.Handlers.Items2.CarouselViewHandler2>();
+				});
+#endif
+			}
 
 			if (UseMauiGraphicsSkia)
 			{
@@ -242,7 +257,9 @@ namespace Maui.Controls.Sample
 						.PerformActionForShortcutItem((a, b, c) => LogEvent(nameof(iOSLifecycle.PerformActionForShortcutItem)))
 						.WillEnterForeground((a) => LogEvent(nameof(iOSLifecycle.WillEnterForeground)))
 						.ApplicationSignificantTimeChange((a) => LogEvent(nameof(iOSLifecycle.ApplicationSignificantTimeChange)))
-						.WillTerminate((a) => LogEvent(nameof(iOSLifecycle.WillTerminate))));
+						.WillTerminate((a) => LogEvent(nameof(iOSLifecycle.WillTerminate)))
+						.RegisteredForRemoteNotifications((a, b) => LogEvent(nameof(iOSLifecycle.RegisteredForRemoteNotifications)))
+						.ReceivedRemoteNotification((a,b) => LogEvent(nameof(iOSLifecycle.ReceivedRemoteNotification))));
 #elif WINDOWS
 					// Log everything in this one
 					events.AddWindows(windows => windows

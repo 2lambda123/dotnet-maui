@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Core.UnitTests;
+using Microsoft.Maui.Controls.Internals;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.UnitTests;
 using NUnit.Framework;
@@ -108,9 +109,19 @@ namespace Microsoft.Maui.Controls.Xaml.UnitTests
 				vm.Model = null;
 				layout.entry1.BindingContext = null;
 
+				//testing standalone bindings
+				if (useCompiledXaml)
+				{
+					var binding = layout.picker0.ItemDisplayBinding;
+					Assert.That(binding, Is.TypeOf<TypedBinding<MockItemViewModel, string>>());
+				}
+
 				//testing invalid bindingcontext type
 				layout.BindingContext = new object();
 				Assert.AreEqual(null, layout.label0.Text);
+
+				//testing source
+				Assert.That(layout.label12.Text, Is.EqualTo("Text for label12"));
 			}
 			
 			[Test] 
@@ -206,6 +217,38 @@ namespace Microsoft.Maui.Controls.Xaml.UnitTests
 
 				values[v] = value;
 				OnPropertyChanged("Indexer[" + v + "]");
+			}
+		}
+
+		MockItemViewModel[] _items;
+		public MockItemViewModel[] Items
+		{
+			get { return _items; }
+			set
+			{
+				_items = value;
+				OnPropertyChanged();
+			}
+		}
+
+		protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+	}
+
+	class MockItemViewModel : INotifyPropertyChanged
+	{
+		public event PropertyChangedEventHandler PropertyChanged;
+
+		private string _title { get; set; }
+		public string Title
+		{
+			get => _title;
+			set
+			{
+				_title = value;
+				OnPropertyChanged();
 			}
 		}
 

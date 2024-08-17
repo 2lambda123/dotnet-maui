@@ -130,6 +130,7 @@ steps:
     inputs:
       packageType: sdk
       version: $(DOTNET_VERSION)
+      includePreviewVersions: true
 
   - pwsh: |
       dotnet --version

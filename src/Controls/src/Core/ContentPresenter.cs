@@ -3,6 +3,7 @@ using System;
 using System.ComponentModel;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Layouts;
+using Microsoft.Maui.Controls.Internals;
 
 namespace Microsoft.Maui.Controls
 {
@@ -16,8 +17,12 @@ namespace Microsoft.Maui.Controls
 		/// <include file="../../docs/Microsoft.Maui.Controls/ContentPresenter.xml" path="//Member[@MemberName='.ctor']/Docs/*" />
 		public ContentPresenter()
 		{
-			SetBinding(ContentProperty, new Binding(ContentProperty.PropertyName, source: RelativeBindingSource.TemplatedParent,
-				converterParameter: this, converter: new ContentConverter()));
+			this.SetBinding(
+				ContentProperty,
+				static (IContentView view) => view.Content,
+				source: RelativeBindingSource.TemplatedParent,
+				converter: new ContentConverter(),
+				converterParameter: this);
 		}
 
 		/// <include file="../../docs/Microsoft.Maui.Controls/ContentPresenter.xml" path="//Member[@MemberName='Content']/Docs/*" />
@@ -41,6 +46,7 @@ namespace Microsoft.Maui.Controls
 			}
 		}
 
+		[Obsolete("Use MeasureOverride instead")]
 		protected override SizeRequest OnMeasure(double widthConstraint, double heightConstraint)
 		{
 			double widthRequest = WidthRequest;
