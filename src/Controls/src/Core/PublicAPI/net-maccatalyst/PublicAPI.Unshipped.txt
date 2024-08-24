@@ -88,6 +88,7 @@ Microsoft.Maui.Controls.Window.TitleBar.set -> void
 override Microsoft.Maui.Controls.ContentPage.LayoutChildren(double x, double y, double width, double height) -> void
 override Microsoft.Maui.Controls.Handlers.Compatibility.CellRenderer.Invoke(string! command, object? args) -> void
 override Microsoft.Maui.Controls.Handlers.Compatibility.CellRenderer.UpdateValue(string! property) -> void
+Microsoft.Maui.Controls.Toolbar.NavigationController.get -> UIKit.UINavigationController!
 override Microsoft.Maui.Controls.GradientBrush.IsEmpty.get -> bool
 override Microsoft.Maui.Controls.Handlers.Items2.CarouselViewController2.IsHorizontal.get -> bool
 override Microsoft.Maui.Controls.Handlers.Items2.CarouselViewController2.RegisterViewTypes() -> void
@@ -213,6 +214,14 @@ Microsoft.Maui.Controls.WebView.ProcessTerminated -> System.EventHandler<Microso
 Microsoft.Maui.Controls.WebViewProcessTerminatedEventArgs
 Microsoft.Maui.Controls.WebViewProcessTerminatedEventArgs.WebViewProcessTerminatedEventArgs() -> void
 override Microsoft.Maui.Controls.Handlers.Items.ItemsViewController<TItemsView>.LoadView() -> void
+static Microsoft.Maui.Controls.Toolbar.MapBackButtonTitle(Microsoft.Maui.Handlers.IToolbarHandler! handler, Microsoft.Maui.Controls.Toolbar! toolbar) -> void
+static Microsoft.Maui.Controls.Toolbar.MapBackButtonVisible(Microsoft.Maui.Handlers.IToolbarHandler! handler, Microsoft.Maui.Controls.Toolbar! toolbar) -> void
+static Microsoft.Maui.Controls.Toolbar.MapBarBackground(Microsoft.Maui.Handlers.IToolbarHandler! handler, Microsoft.Maui.Controls.Toolbar! toolbar) -> void
+static Microsoft.Maui.Controls.Toolbar.MapBarTextColor(Microsoft.Maui.Handlers.IToolbarHandler! handler, Microsoft.Maui.Controls.Toolbar! toolbar) -> void
+static Microsoft.Maui.Controls.Toolbar.MapIconColor(Microsoft.Maui.Handlers.IToolbarHandler! handler, Microsoft.Maui.Controls.Toolbar! toolbar) -> void
+static Microsoft.Maui.Controls.Toolbar.MapTitleIcon(Microsoft.Maui.Handlers.IToolbarHandler! handler, Microsoft.Maui.Controls.Toolbar! toolbar) -> void
+static Microsoft.Maui.Controls.Toolbar.MapTitleView(Microsoft.Maui.Handlers.IToolbarHandler! handler, Microsoft.Maui.Controls.Toolbar! toolbar) -> void
+static Microsoft.Maui.Controls.Toolbar.MapToolbarItems(Microsoft.Maui.Handlers.IToolbarHandler! handler, Microsoft.Maui.Controls.Toolbar! toolbar) -> void
 static readonly Microsoft.Maui.Controls.HybridWebView.DefaultFileProperty -> Microsoft.Maui.Controls.BindableProperty!
 static readonly Microsoft.Maui.Controls.HybridWebView.HybridRootProperty -> Microsoft.Maui.Controls.BindableProperty!
 override Microsoft.Maui.Controls.TitleBar.OnApplyTemplate() -> void
@@ -401,6 +410,7 @@ override Microsoft.Maui.Controls.SearchBar.IsEnabledCore.get -> bool
 ~Microsoft.Maui.Controls.WebView.UserAgent.set -> void
 ~override Microsoft.Maui.Controls.Region.Equals(object obj) -> bool
 ~override Microsoft.Maui.Controls.Shapes.Matrix.Equals(object obj) -> bool
+~static Microsoft.Maui.Controls.NavigationPage.MapToolbar(Microsoft.Maui.IElementHandler handler, Microsoft.Maui.IToolbarElement element) -> void
 ~static Microsoft.Maui.Controls.Handlers.Items2.CarouselTemplatedCell2.ReuseId -> Foundation.NSString
 ~static Microsoft.Maui.Controls.Handlers.Items2.CarouselViewHandler2.MapCurrentItem(Microsoft.Maui.Controls.Handlers.Items2.CarouselViewHandler2 handler, Microsoft.Maui.Controls.CarouselView carouselView) -> void
 ~static Microsoft.Maui.Controls.Handlers.Items2.CarouselViewHandler2.MapIsBounceEnabled(Microsoft.Maui.Controls.Handlers.Items2.CarouselViewHandler2 handler, Microsoft.Maui.Controls.CarouselView carouselView) -> void
