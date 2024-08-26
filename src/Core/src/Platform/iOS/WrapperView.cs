@@ -186,7 +186,7 @@ namespace Microsoft.Maui.Platform
 			var path = _clip?.PathForBounds(bounds);
 			var nativePath = path?.AsCGPath();
 
-			mask ??= MaskLayer = new CAShapeLayer();
+			mask ??= MaskLayer = new StaticCAShapeLayer();
 			mask.Path = nativePath;
 
 			var backgroundLayer = GetBackgroundLayer();
@@ -196,7 +196,7 @@ namespace Microsoft.Maui.Platform
 			if (backgroundLayer is null)
 				return;
 
-			backgroundMask ??= BackgroundMaskLayer = new CAShapeLayer();
+			backgroundMask ??= BackgroundMaskLayer = new StaticCAShapeLayer();
 			backgroundMask.Path = nativePath;
 		}
 
@@ -213,7 +213,7 @@ namespace Microsoft.Maui.Platform
 			if (shadowLayer == null && Shadow == null)
 				return;
 
-			shadowLayer ??= ShadowLayer = new CAShapeLayer();
+			shadowLayer ??= ShadowLayer = new StaticCAShapeLayer();
 
 			var frame = Frame;
 			var bounds = new RectF(0, 0, (float)frame.Width, (float)frame.Height);
