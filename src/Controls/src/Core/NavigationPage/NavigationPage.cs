@@ -402,6 +402,8 @@ namespace Microsoft.Maui.Controls
 		void RemoveFromInnerChildren(Element page)
 		{
 			InternalChildren.Remove(page);
+
+			// TODO For NET9 we should remove this because the DisconnectHandlers will take care of it
 			page.Handler = null;
 		}
 
@@ -784,6 +786,10 @@ namespace Microsoft.Maui.Controls
 					{
 						Owner.RemoveFromInnerChildren(currentPage);
 						Owner.CurrentPage = newCurrentPage;
+						if (currentPage.TitleView != null)
+						{
+							currentPage.RemoveLogicalChild(currentPage.TitleView);
+						}
 					},
 					() =>
 					{

@@ -66,7 +66,6 @@ namespace Microsoft.Maui.Controls
 
 		readonly Lazy<PlatformConfigurationRegistry<Page>> _platformConfigurationRegistry;
 
-		bool _allocatedFlag;
 		Rect _containerArea;
 
 		bool _containerAreaSet;
@@ -74,7 +73,7 @@ namespace Microsoft.Maui.Controls
 		bool _hasAppeared;
 		private protected bool HasAppeared => _hasAppeared;
 
-		View _titleView;
+		internal View TitleView;
 
 		List<Action> _pendingActions = new List<Action>();
 
@@ -282,7 +281,7 @@ namespace Microsoft.Maui.Controls
 		/// Displays a platform action sheet, allowing the application user to choose from several buttons.
 		/// </summary>
 		/// <param name="title">Title of the displayed action sheet. Can be <see langword="null"/> to hide the title.</param>
-		/// <param name="cancel">Text to be displayed in the 'Cancel' button. Can be null to hide the <see langword="null"/> action.</param>
+		/// <param name="cancel">Text to be displayed in the 'Cancel' button. Can be null to hide the cancel action.</param>
 		/// <param name="destruction">Text to be displayed in the 'Destruct' button. Can be <see langword="null"/> to hide the destructive option.</param>
 		/// <param name="flowDirection">The flow direction to be used by the action sheet.</param>
 		/// <param name="buttons">Text labels for additional buttons.</param>
@@ -494,8 +493,14 @@ namespace Microsoft.Maui.Controls
 				SetInheritedBindingContext(menubarItem, BindingContext);
 			}
 
-			if (_titleView != null)
-				SetInheritedBindingContext(_titleView, BindingContext);
+			if (TitleView != null)
+				SetInheritedBindingContext(TitleView, BindingContext);
+		}
+		
+		internal override void OnChildMeasureInvalidatedInternal(VisualElement child, InvalidationTrigger trigger)
+		{
+			// TODO: once we remove old Xamarin public signatures we can invoke `OnChildMeasureInvalidated(VisualElement, InvalidationTrigger)` directly
+			OnChildMeasureInvalidated(child, new InvalidationEventArgs(trigger));
 		}
 
 		/// <summary>
@@ -537,7 +542,6 @@ namespace Microsoft.Maui.Controls
 		/// <param name="height">The height allocated to the page.</param>
 		protected override void OnSizeAllocated(double width, double height)
 		{
-			_allocatedFlag = true;
 			base.OnSizeAllocated(width, height);
 			UpdateChildrenLayout();
 		}
@@ -599,12 +603,7 @@ namespace Microsoft.Maui.Controls
 				}
 			}
 
-			_allocatedFlag = false;
 			InvalidateMeasureInternal(InvalidationTrigger.MeasureChanged);
-			if (!_allocatedFlag && Width >= 0 && Height >= 0)
-			{
-				SizeAllocated(Width, Height);
-			}
 		}
 
 		internal void OnAppearing(Action action)
@@ -706,9 +705,6 @@ namespace Microsoft.Maui.Controls
 				for (var i = 0; i < e.OldItems.Count; i++)
 				{
 					var item = (Element)e.OldItems[i];
-					if (item is VisualElement visual)
-						visual.MeasureInvalidated -= OnChildMeasureInvalidated;
-
 					RemoveLogicalChild(item);
 				}
 			}
@@ -721,20 +717,21 @@ namespace Microsoft.Maui.Controls
 				{
 					int insertIndex = index;
 					if (insertIndex < 0)
-						insertIndex = InternalChildren.IndexOf(item);
-
-					if (item is VisualElement visual)
 					{
-						visual.MeasureInvalidated += OnChildMeasureInvalidated;
+						insertIndex = InternalChildren.IndexOf(item);
+					}
 
-						InsertLogicalChild(insertIndex, visual);
+					InsertLogicalChild(insertIndex, item);
+					
+					if (item is VisualElement)
+					{
 						InvalidateMeasureInternal(InvalidationTrigger.MeasureChanged);
 					}
-					else
-						InsertLogicalChild(insertIndex, item);
-
+					
 					if (index >= 0)
+					{
 						index++;
+					}
 				}
 			}
 		}
@@ -798,7 +795,7 @@ namespace Microsoft.Maui.Controls
 
 		internal void SetTitleView(View oldTitleView, View newTitleView)
 		{
-			_titleView = newTitleView;
+			TitleView = newTitleView;
 		}
 
 		internal bool HasNavigatedTo { get; private set; }
