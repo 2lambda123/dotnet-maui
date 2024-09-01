@@ -13,6 +13,7 @@ namespace Microsoft.Maui.TestCases.Tests.Issues
 		public override string Issue => "Button doesn't respect LineBreakMode";
 
 		[Test]
+		[Category(UITestCategories.Button)]
 		public void TextInButtonShouldBeTruncated()
 		{
 			App.WaitForElement("button");
