@@ -13,6 +13,7 @@ namespace Microsoft.Maui.TestCases.Tests.Issues
 		public override string Issue => "Items are enabled when ListView is not enabled";
 
 		[Test]
+		[Category(UITestCategories.ListView)]
 		public void ListCellsItemsShouldNotBeEnabledWhenListViewIsNotEnabled()
 		{
 			App.WaitForElement("button1");
