@@ -85,5 +85,10 @@ namespace Microsoft.Maui.Controls
 		}
 
 		protected virtual bool ValidateItemTemplate(DataTemplate template) => true;
+		
+		internal override void OnChildMeasureInvalidatedInternal(VisualElement child, InvalidationTrigger trigger)
+		{
+			// No need to trigger and propagate MeasureInvalidated given this is a scrollable area
+		}
 	}
 }

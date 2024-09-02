@@ -224,5 +224,10 @@ namespace Microsoft.Maui.Controls
 			if (InternalItemsLayout is BindableObject bo)
 				SetInheritedBindingContext(bo, BindingContext);
 		}
+		
+		internal override void OnChildMeasureInvalidatedInternal(VisualElement child, InvalidationTrigger trigger)
+		{
+			// No need to trigger and propagate MeasureInvalidated given this is a scrollable area
+		}
 	}
 }
