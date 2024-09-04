@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Versioning;
 using Foundation;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Handlers;
@@ -117,6 +118,9 @@ namespace Microsoft.Maui.Platform
 
 			var mauiWindow = application.CreateWindow(activationState);
 
+			var wndProvider = mauiContext.Services?.GetRequiredService<WindowCoreServices>();
+			wndProvider?.SetWindow(uiWindow, mauiWindow);
+			
 			uiWindow.SetWindowHandler(mauiWindow, mauiContext);
 
 			return uiWindow;

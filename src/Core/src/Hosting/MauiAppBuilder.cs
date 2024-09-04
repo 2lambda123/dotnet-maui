@@ -7,6 +7,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.LifecycleEvents;
 
+#if ANDROID
+using PlatformWindow = Android.App.Activity;
+#elif IOS || MACCATALYST
+using PlatformWindow = UIKit.UIWindow;
+#elif WINDOWS
+using PlatformWindow = Microsoft.UI.Xaml.Window;
+#endif
+
 namespace Microsoft.Maui.Hosting
 {
 	/// <summary>
@@ -40,6 +48,16 @@ namespace Microsoft.Maui.Hosting
 				this.ConfigureWindowEvents();
 				this.ConfigureDispatching();
 
+#if ANDROID || IOS || MACCATALYST || WINDOWS
+				this.Services.TryAddScoped<WindowCoreServices>(svc => new WindowCoreServices());
+
+				// This causes ImageConverter to crash on windows
+				/*(this.Services.TryAddScoped<PlatformWindow>(svc =>
+				{
+					return svc.GetRequiredService<WindowCoreServices>().PlatformWindow!;
+				});*/
+
+#endif
 				this.UseEssentials();
 
 #if WINDOWS

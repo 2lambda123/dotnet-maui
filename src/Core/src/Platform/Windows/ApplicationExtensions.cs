@@ -1,5 +1,8 @@
-﻿using Microsoft.Maui.Handlers;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Maui.Embedding;
+using Microsoft.Maui.Handlers;
 using Microsoft.Maui.LifecycleEvents;
+using Microsoft.UI.Xaml;
 
 namespace Microsoft.Maui.Platform
 {
@@ -25,10 +28,14 @@ namespace Microsoft.Maui.Platform
 
 			var window = application.CreateWindow(activationState);
 
+			var wndProvider = mauiContext.Services.GetRequiredService<WindowCoreServices>();
+			wndProvider?.SetWindow(winuiWindow, window);
+			
 			winuiWindow.SetWindowHandler(window, mauiContext);
 			winuiWindow.SetWindow(window);
 
 			applicationContext.Services.InvokeLifecycleEvents<WindowsLifecycle.OnWindowCreated>(del => del(winuiWindow));
+
 			winuiWindow.Activate();
 		}
 	}
