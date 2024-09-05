@@ -45,6 +45,7 @@ namespace Microsoft.Maui.Handlers
 			platformView.ViewAttachedToWindow += OnPlatformViewAttachedToWindow;
 			platformView.TextChanged += OnTextChanged;
 			platformView.FocusChange += OnFocusedChange;
+			platformView.LayoutChange += PlatformViewLayoutChange;
 			platformView.Touch += OnTouch;
 			platformView.EditorAction += OnEditorAction;
 		}
@@ -56,6 +57,7 @@ namespace Microsoft.Maui.Handlers
 			platformView.ViewAttachedToWindow -= OnPlatformViewAttachedToWindow;
 			platformView.TextChanged -= OnTextChanged;
 			platformView.FocusChange -= OnFocusedChange;
+			platformView.LayoutChange -= PlatformViewLayoutChange;
 			platformView.Touch -= OnTouch;
 			platformView.EditorAction -= OnEditorAction;
 
@@ -274,6 +276,15 @@ namespace Microsoft.Maui.Handlers
 
 			PlatformView.SetCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
 			_clearButtonVisible = false;
+		}
+
+		void PlatformViewLayoutChange(object? sender, LayoutChangeEventArgs e)
+		{
+			if (PlatformView != null && VirtualView != null)
+			{
+				PlatformView.SetHeight(PlatformView.Height);
+				PlatformView.UpdateVerticalTextAlignment(VirtualView);
+			}
 		}
 	}
 }
